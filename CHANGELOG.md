@@ -8,4 +8,6 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.1.0]
 
-- First release.
+- First release: `shorten` collapses the home directory to `~` and middle-elides a
+  path to fit a width budget, with a basename-truncation fallback and a configurable
+  separator, home and placeholder.
