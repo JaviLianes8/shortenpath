@@ -95,3 +95,42 @@ Read as a user who puts paths in prompts, status bars, tables and logs:
 Left out on purpose: resolving `.` and `..` or symlinks (display only, never touches disk),
 grapheme clusters beyond marks and joiners (emoji sequences differ between terminals),
 ambiguous width characters as two columns (terminal setting, not data), URL schemes.
+
+## Verification
+
+- Gates: `ruff format --check .`, `ruff check .`, `mypy --strict src` (also `src tests`) and
+  `pytest` exit 0 on a second machine with Python 3.14, a fresh clone, the sources in place and
+  `SHORTENPATH_E2E=1`: 222 passed, nothing skipped. The wheel test builds the wheel and the
+  sdist, checks that no fetched source or test ships in them, installs the wheel in a fresh
+  venv, drives the API from an empty folder, and runs the installed `shortenpath` script and
+  `python -m shortenpath` (stdin included).
+- Ground truth: every example path of the two Microsoft pages is read from the fetched text
+  and split with the anchor its description gives; the rules relied on (forward slash as a
+  separator except after an exact `\?\`, server and share as the volume of a UNC device, both
+  slashes reserved) and the POSIX leading slash, filename and home definitions are checked in
+  the fetched texts; every assigned code point of `EastAsianWidth.txt` for the running Unicode
+  version gets two columns for W and F and one otherwise.
+- Oracles: `ntpath.splitroot` and `ntpath.splitdrive` over 40000 fuzzed Windows paths (only
+  the two documented differences excluded), `posixpath.splitroot`, `os.path.splitext` for the
+  extension, a brute force reading of the elision rule, and on Windows the live
+  `PathCompactPathExW`: both keep a path that fits, and whenever it keeps the file name whole,
+  so does this library. It compacts a path exactly as long as its budget, which this one does
+  not. Properties over fuzzed paths: never wider than the budget, a fitting result is stable,
+  anchor and last name kept whole when they fit, a last name that fits alone never cut.
+- Mutations: 96 mutants (width classes and ranges, emoji presentation, clusters and cuts,
+  extension and squeeze rules, every anchor form and the verbatim prefix, separator runs,
+  home folding guards and keys, every validation, the search and its tie break, every
+  fallback, and the command line rules: width, stdin, streaming flush, option check before
+  input, closed pipe, code page), applied one at a time with the bytecode cache disabled and
+  purged before each run, baseline green before and after. Earlier runs left survivors (range
+  ends, separator runs, a home check that depended on the machine's environment, equivalent
+  branches that were then simplified); each got a test or a simpler code path. The final run
+  killed all 96.
+- Independent review: 11 findings. Fixed with regression tests: a single name that fits
+  alone was cut to keep the anchor; a separator run after a UNC share blocked the whole name;
+  a wide last stem character broke the extension rule and the start could be empty; a
+  relative home folded relative paths; the emoji presentation selector and Hangul Jamo
+  Extended-B were miscounted; the command line read all of stdin before writing; README rules
+  were incomplete; the checklist was stale; the UAX #11 line claimed an unfetched source;
+  weak Win32 and property tests were tightened. Control characters still count one column and
+  are documented.
