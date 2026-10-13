@@ -113,6 +113,10 @@ def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator(fixed_home
     foreign: Flavor = "posix" if os.name == "nt" else "windows"
     path = home + os.sep + "x"
     assert shorten(path, 200, flavor=foreign) == path
+    # Joined with the foreign separator, the home would match under the foreign rules.
+    other = home + ("/" if os.name == "nt" else B) + "x"
+    assert shorten(other, 200, flavor=foreign) == other
+    assert shorten(other, 200, flavor=foreign, home=home) == "~" + other[len(home)] + "x"
     assert shorten(path, 200, sep=os.sep) == path
 
 
