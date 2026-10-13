@@ -106,7 +106,7 @@ ambiguous width characters as two columns (terminal setting, not data), URL sche
   `python -m shortenpath` (stdin included).
 - Ground truth: every example path of the two Microsoft pages is read from the fetched text
   and split with the anchor its description gives; the rules relied on (forward slash as a
-  separator except after an exact `\?\`, server and share as the volume of a UNC device, both
+  separator except after an exact `\\?\`, server and share as the volume of a UNC device, both
   slashes reserved) and the POSIX leading slash, filename and home definitions are checked in
   the fetched texts; every assigned code point of `EastAsianWidth.txt` for the running Unicode
   version gets two columns for W and F and one otherwise.
