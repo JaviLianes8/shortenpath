@@ -115,7 +115,7 @@ def _anchor_key(anchor: str, flavor: str, sep: str | None) -> str:
 def fold_home(parts: Parts, home: Parts, flavor: str, sep: str | None) -> Parts:
     """Replace a leading ``home`` in ``parts`` with ``~``; ``parts`` unchanged otherwise."""
     count = len(home.names)
-    if count == 0 or len(parts.names) < count:
+    if count == 0:
         return parts
     if _anchor_key(parts.anchor, flavor, sep) != _anchor_key(home.anchor, flavor, sep):
         return parts

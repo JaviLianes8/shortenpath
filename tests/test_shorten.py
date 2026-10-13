@@ -58,6 +58,23 @@ def test_single_name_keeps_its_anchor_while_there_is_room() -> None:
     assert px("/verylongfilename.py", 5) == "v...y"
 
 
+def test_a_name_exactly_as_wide_as_the_budget_is_whole() -> None:
+    assert px("/a/b/longname", 8) == "longname"
+
+
+def test_a_relative_single_name_keeps_its_trailing_separator() -> None:
+    assert px("verylongname/", 10) == "ver...ame/"
+
+
+def test_the_last_resort_cut_drops_the_trailing_separator() -> None:
+    assert px("/a/verylongname/", 6) == "ve...e"
+
+
+def test_a_drive_relative_name_keeps_its_drive() -> None:
+    out = shorten("C:verylongname", 13, flavor="windows", placeholder="\u2026")
+    assert out == "C:veryl" + chr(0x2026) + "gname"
+
+
 def test_width_below_the_placeholder_keeps_the_start_of_the_name() -> None:
     assert px("/a/b/longname", 2) == "lo"
     assert px("/a/b/longname", 3) == "lon"

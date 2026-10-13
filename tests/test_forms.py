@@ -87,6 +87,18 @@ def test_verbatim_prefix_keeps_forward_slashes_inside_names() -> None:
     assert normalized.names == ("a", "b", "c")
 
 
+def test_verbatim_prefix_forward_slash_stays_in_the_volume_name() -> None:
+    parts = split("||?|C:/a|b".replace("|", B), "windows", None)
+    assert parts.anchor == "||?|C:/a|".replace("|", B)
+    assert parts.names == ("b",)
+
+
+def test_the_last_name_keeps_the_separator_run_after_a_unc_share() -> None:
+    path = "||srv|share|||verylongname.txt"
+    assert win(path, 22) == "...|||verylongname.txt"
+    assert win(path, 21) == "||srv|share|||ve...xt"
+
+
 def test_incomplete_unc_is_all_anchor() -> None:
     parts = split(B * 2 + "server", "windows", None)
     assert parts.anchor == B * 2 + "server"

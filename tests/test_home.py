@@ -92,23 +92,43 @@ def test_home_tilde_off_leaves_home_alone() -> None:
     assert out == "/home/javi/x"
 
 
-def test_default_home_is_the_running_user_for_native_paths() -> None:
-    home = os.path.expanduser("~")
+HOME = "C:" + B + "Users" + B + "tester" if os.name == "nt" else "/home/tester"
+
+
+@pytest.fixture
+def fixed_home(monkeypatch: pytest.MonkeyPatch) -> str:
+    monkeypatch.setattr(os.path, "expanduser", lambda path: HOME if path == "~" else path)
+    return HOME
+
+
+def test_default_home_is_the_running_user_for_native_paths(fixed_home: str) -> None:
+    home = fixed_home
     flavor: Flavor = "windows" if os.name == "nt" else "posix"
     assert shorten(os.path.join(home, "x"), 200, flavor=flavor) == "~" + os.sep + "x"
     assert shorten(os.path.join(home, "x"), 200) == "~" + os.sep + "x"
 
 
-def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator() -> None:
-    home = os.path.expanduser("~")
+def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator(fixed_home: str) -> None:
+    home = fixed_home
     foreign: Flavor = "posix" if os.name == "nt" else "windows"
     path = home + os.sep + "x"
     assert shorten(path, 200, flavor=foreign) == path
     assert shorten(path, 200, sep=os.sep) == path
 
 
+def test_windows_root_run_after_the_drive_still_matches() -> None:
+    assert win("C:|||Users|Javi|x", "C:|Users|Javi") == "~|x"
+    assert win("C:|Users|Javi|x", "C:///Users/Javi") == "~|x"
+
+
+def test_custom_separator_home_matches_any_run_of_it() -> None:
+    assert shorten("::::a::b::c", 80, sep="::", home="::a::b") == "~::c"
+    assert shorten("a::b::c", 80, sep="::", home="::a::b") == "a::b::c"
+
+
 def test_unknown_home_is_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(os.path, "expanduser", lambda path: path)
+    assert shorten("~" + os.sep + "x", 200) == "~" + os.sep + "x"
     assert shorten(os.sep + "x", 200) == os.sep + "x"
 
 

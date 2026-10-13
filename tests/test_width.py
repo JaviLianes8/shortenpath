@@ -42,6 +42,13 @@ def test_display_width_rejects_non_text() -> None:
         display_width(b"abc")  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    ("code", "width"), [(0x115F, 2), (0x1160, 0), (0x11A8, 0), (0x11FF, 0), (0x1200, 1)]
+)
+def test_hangul_medial_and_final_jamo_range_ends(code: int, width: int) -> None:
+    assert char_width(chr(code)) == width
+
+
 def test_char_width_is_zero_one_or_two() -> None:
     assert {char_width(chr(code)) for code in range(0x3000)} == {0, 1, 2}
 
@@ -79,9 +86,30 @@ def test_a_wide_character_that_would_overflow_is_left_out() -> None:
     assert display_width(result) == 7
 
 
+def test_columns_a_wide_end_cannot_use_go_to_the_start() -> None:
+    result = squeeze(CJK * 3, 9, "...")
+    assert result == CJK[:2] + "..." + CJK[2]
+    assert display_width(result) == 9
+
+
 @pytest.mark.parametrize(
     "name",
-    ["a.txt", ".bashrc", "..x", "a.", "...a", "a..b", "archive.tar.gz", "x", "", ".", "..", "a.b."],
+    [
+        "a.txt",
+        ".bashrc",
+        "..x",
+        "a.",
+        "...a",
+        "a..b",
+        "archive.tar.gz",
+        "x",
+        "",
+        ".",
+        "..",
+        "a.b.",
+        "ab",
+        "readme",
+    ],
 )
 def test_extension_agrees_with_os_path_splitext(name: str) -> None:
     assert extension(name) == os.path.splitext(name)[1]

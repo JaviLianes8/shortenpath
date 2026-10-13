@@ -8,7 +8,8 @@ from ._width import clusters, display_width, head, tail
 def extension(name: str) -> str:
     """The extension of ``name`` as ``os.path.splitext`` sees it, leading dots ignored."""
     dot = name.rfind(".")
-    if dot <= 0 or not name[:dot].strip("."):
+    # No dot, or only dots before the last one (".bashrc", "..x"): no extension.
+    if not name[: max(dot, 0)].strip("."):
         return ""
     return name[dot:]
 

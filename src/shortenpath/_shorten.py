@@ -66,8 +66,8 @@ def _home(home: object, rules: str, sep: str | None) -> str:
     if sep is not None or rules != resolve("native"):
         # The running user's home only means something for paths of the running system.
         return ""
-    found = os.path.expanduser("~")
-    return "" if found == "~" else found
+    # Without a known home this gives back "~", which folds nothing that would change.
+    return os.path.expanduser("~")
 
 
 def _fit(parts: Parts, width: int, placeholder: str) -> str:
@@ -116,10 +116,7 @@ def _search(parts: Parts, room: int) -> tuple[int, int] | None:
     ]
     best: tuple[int, int] | None = None
     for keep_head in range(count - 1):
-        left = room - heads[keep_head]
-        if left < tails[1]:
-            break
-        keep_tail = min(bisect_right(tails, left) - 1, count - 1 - keep_head)
-        if best is None or keep_head + keep_tail >= sum(best):
+        keep_tail = min(bisect_right(tails, room - heads[keep_head]) - 1, count - 1 - keep_head)
+        if keep_tail >= 1 and (best is None or keep_head + keep_tail >= sum(best)):
             best = (keep_head, keep_tail)
     return best
