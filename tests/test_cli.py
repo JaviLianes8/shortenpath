@@ -140,12 +140,14 @@ def test_python_dash_m_runs_the_tool() -> None:
 
 
 def test_stdin_lines_are_written_as_they_arrive(monkeypatch: pytest.MonkeyPatch) -> None:
-    out = io.StringIO()
-    seen: list[str] = []
+    raw = io.BytesIO()
+    # A buffered text stream: nothing reaches ``raw`` until it is flushed.
+    out = io.TextIOWrapper(raw, encoding="utf-8", newline="\n")
+    seen: list[bytes] = []
 
     def lines() -> Iterator[str]:
         yield "/a/b/c/d/e/file\n"
-        seen.append(out.getvalue())
+        seen.append(raw.getvalue())
         yield "/x\n"
 
     class Stdin:
@@ -155,8 +157,8 @@ def test_stdin_lines_are_written_as_they_arrive(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(sys, "stdin", Stdin())
     monkeypatch.setattr(sys, "stdout", out)
     assert main(["-w", "11", "-f", "posix"]) == 0
-    assert seen == ["/a/.../file\n"]
-    assert out.getvalue() == "/a/.../file\n/x\n"
+    assert seen == [b"/a/.../file\n"]
+    assert raw.getvalue() == b"/a/.../file\n/x\n"
 
 
 def test_bad_options_fail_before_reading_stdin(

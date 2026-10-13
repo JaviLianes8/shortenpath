@@ -33,7 +33,7 @@ def squeeze(name: str, budget: int, placeholder: str) -> str:
     end_budget = room // 2
     ext = extension(name)
     stem = clusters(name[: len(name) - len(ext)])
-    if ext and len(stem) > 1:
+    if ext:
         keep = display_width(ext) + stem[-1][1]
         if room >= keep + stem[0][1]:
             end_budget = max(keep, end_budget)

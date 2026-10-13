@@ -133,6 +133,11 @@ def test_squeeze_rules(name: str, budget: int, expected: str) -> None:
     assert display_width(expected) <= budget
 
 
+def test_a_name_that_fits_is_returned_whole() -> None:
+    assert squeeze("abc", 3, "...") == "abc"
+    assert squeeze(CJK, 6, "...") == CJK
+
+
 def test_a_long_extension_is_cut_like_any_other_text() -> None:
     assert squeeze("a.verylongextension", 9, "...") == "a.v...ion"
 
