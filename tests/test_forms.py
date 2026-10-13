@@ -96,7 +96,8 @@ def test_verbatim_prefix_forward_slash_stays_in_the_volume_name() -> None:
 def test_the_last_name_keeps_the_separator_run_after_a_unc_share() -> None:
     path = "||srv|share|||verylongname.txt"
     assert win(path, 22) == "...|||verylongname.txt"
-    assert win(path, 21) == "||srv|share|||ve...xt"
+    assert win(path, 21) == "...|verylongname.txt"
+    assert win(path, 16) == "verylongname.txt"
 
 
 def test_incomplete_unc_is_all_anchor() -> None:

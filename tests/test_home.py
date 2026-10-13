@@ -108,16 +108,22 @@ def test_default_home_is_the_running_user_for_native_paths(fixed_home: str) -> N
     assert shorten(os.path.join(home, "x"), 200) == "~" + os.sep + "x"
 
 
-def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator(fixed_home: str) -> None:
-    home = fixed_home
+def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A home that reads as rooted under both rules, so only the guard keeps it out.
+    monkeypatch.setattr(os.path, "expanduser", lambda path: "/srv/tester" if path == "~" else path)
     foreign: Flavor = "posix" if os.name == "nt" else "windows"
-    path = home + os.sep + "x"
-    assert shorten(path, 200, flavor=foreign) == path
-    # Joined with the foreign separator, the home would match under the foreign rules.
-    other = home + ("/" if os.name == "nt" else B) + "x"
-    assert shorten(other, 200, flavor=foreign) == other
-    assert shorten(other, 200, flavor=foreign, home=home) == "~" + other[len(home)] + "x"
-    assert shorten(path, 200, sep=os.sep) == path
+    assert shorten("/srv/tester/x", 200, flavor=foreign) == "/srv/tester/x"
+    assert shorten("/srv/tester/x", 200, flavor=foreign, home="/srv/tester") == "~/x"
+    assert shorten("/srv/tester/x", 200, sep="/") == "/srv/tester/x"
+    assert shorten("/srv/tester/x", 200, sep="/", home="/srv/tester") == "~/x"
+
+
+def test_a_relative_home_never_folds() -> None:
+    assert px("home/javi/x", "home/javi") == "home/javi/x"
+    assert win("C:Users|Javi|x", "C:Users|Javi") == "C:Users|Javi|x"
+    assert shorten("a::b::c", 80, sep="::", home="a::b") == "a::b::c"
 
 
 def test_windows_root_run_after_the_drive_still_matches() -> None:

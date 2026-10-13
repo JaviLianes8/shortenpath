@@ -7,6 +7,7 @@ import io
 import os
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -136,3 +137,34 @@ def test_python_dash_m_runs_the_tool() -> None:
     assert result.returncode == 0, result.stderr
     # A legacy code page cannot hold the name; it is replaced instead of crashing.
     assert result.stdout.decode("cp1252").split() == [".../??.txt"]
+
+
+def test_stdin_lines_are_written_as_they_arrive(monkeypatch: pytest.MonkeyPatch) -> None:
+    out = io.StringIO()
+    seen: list[str] = []
+
+    def lines() -> Iterator[str]:
+        yield "/a/b/c/d/e/file\n"
+        seen.append(out.getvalue())
+        yield "/x\n"
+
+    class Stdin:
+        def __iter__(self) -> Iterator[str]:
+            return lines()
+
+    monkeypatch.setattr(sys, "stdin", Stdin())
+    monkeypatch.setattr(sys, "stdout", out)
+    assert main(["-w", "11", "-f", "posix"]) == 0
+    assert seen == ["/a/.../file\n"]
+    assert out.getvalue() == "/a/.../file\n/x\n"
+
+
+def test_bad_options_fail_before_reading_stdin(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Stdin:
+        def __iter__(self) -> Iterator[str]:
+            raise AssertionError("stdin was read")
+
+    monkeypatch.setattr(sys, "stdin", Stdin())
+    assert "placeholder must be" in _fails(capsys, "-w", "5", "--placeholder", "")

@@ -154,7 +154,11 @@ def test_wide_and_fullwidth_take_two_columns_in_this_unicode_version() -> None:
     for code, value in table.items():
         char = chr(code)
         category = unicodedata.category(char)
-        if category in ("Cn", "Mn", "Me", "Cf", "Cs") or 0x1160 <= code <= 0x11FF:
+        if (
+            category in ("Cn", "Mn", "Me", "Cf", "Cs")
+            or 0x1160 <= code <= 0x11FF
+            or 0xD7B0 <= code <= 0xD7FF
+        ):
             continue
         key = value if value in ("W", "F") else "other"
         counted[key] += 1

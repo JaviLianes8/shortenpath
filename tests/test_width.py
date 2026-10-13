@@ -135,3 +135,33 @@ def test_squeeze_rules(name: str, budget: int, expected: str) -> None:
 
 def test_a_long_extension_is_cut_like_any_other_text() -> None:
     assert squeeze("a.verylongextension", 9, "...") == "a.v...ion"
+
+
+def test_emoji_presentation_selector_makes_two_columns() -> None:
+    heart = chr(0x2764) + chr(0xFE0F)
+    assert display_width(heart) == 2
+    assert display_width(chr(0x2764)) == 1
+    assert clusters(heart + "a") == [(heart, 2), ("a", 1)]
+
+
+def test_hangul_jamo_extended_b_medial_and_final_take_no_columns() -> None:
+    assert char_width(chr(0xD7B0)) == 0
+    assert char_width(chr(0xD7FB)) == 0
+    assert char_width(chr(0xD7AF)) == 1
+
+
+def test_a_wide_stem_keeps_its_last_character_before_the_extension() -> None:
+    name = "".join(map(chr, [0x9577, 0x3044, 0x540D, 0x524D, 0x30D5, 0x30A1, 0x30A4, 0x30EB]))
+    assert squeeze(name + ".txt", 12, "...") == name[:1] + "..." + name[-1] + ".txt"
+    # Without room for both ends of the stem, the plain middle cut leaves no four dots.
+    assert squeeze(name + ".txt", 9, "...") == name[:1] + "...txt"
+
+
+def test_the_start_gets_its_first_character_when_it_fits() -> None:
+    family = chr(0x1F468) + chr(0x200D) + chr(0x1F469)
+    assert squeeze(family + ".txt", 7, "...") == family + "..."
+    assert squeeze(family + ".txt", 6, "...") == "...txt"
+
+
+def test_nothing_fits_gives_an_empty_cut() -> None:
+    assert shorten("/a/" + CJK[0], 1, flavor="posix") == ""

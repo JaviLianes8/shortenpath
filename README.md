@@ -84,19 +84,28 @@ fits `width` columns:
    (`\\server\share\`), a device path (`\\.\C:\`, `\\?\Volume{...}\`,
    `\\?\UNC\server\share\`) or `~`.
 2. The placeholder, the separator and the last name: the whole name is worth more than the
-   anchor.
-3. The last name cut in the middle, keeping its start and its extension.
+   anchor. A run of separators that does not fit shrinks to one.
+3. The last name alone, then the anchor with the name cut in the middle (a path with a
+   single name and room for both).
+4. The last name cut in the middle: its start, the placeholder, and its end, which keeps
+   the extension and the stem character before it when there is room for them. With no
+   room for the placeholder only the start of the name is kept, and when not even its first
+   character fits the result is empty.
 
 | Option | Meaning |
 | --- | --- |
 | `flavor` | `"posix"`, `"windows"` or `"native"` (the running system). `Flavor` is its type. |
-| `home_tilde`, `home` | Fold the home folder to `~`. `home` defaults to the current user's for native paths. A home that is only a root never folds. |
+| `home_tilde`, `home` | Fold the home folder to `~`. `home` defaults to the current user's for native paths. A relative home, or one that is only a root, never folds. |
 | `sep` | A custom separator instead of the flavor's rules, for URLs or keys. |
 | `placeholder` | What stands for the removed folders, `...` by default. |
 
 Separator runs are kept as written. On Windows a path that starts exactly with `\\?\`
 skips normalization, so there only `\` separates and `/` is part of a name.
-`display_width(text)` gives the columns of any text. Wrong types raise `TypeError`; a
+`display_width(text)` gives the columns of any text: East Asian wide and fullwidth
+characters and characters with the emoji presentation selector take two, combining marks,
+format characters and Hangul medial and final jamo none, everything else (control
+characters included) one. Emoji joined into one picture are counted as their parts, which
+can only overestimate. Wrong types raise `TypeError`; a
 width below one or an empty separator or placeholder raises `ValueError`.
 
 Compared with the Win32 `PathCompactPathEx` function, this never cuts inside the
@@ -112,8 +121,9 @@ $ shortenpath -w 24 -f windows 'C:\Program Files\Common Files\system\ado\msado15
 C:\...\ado\msado15.dll
 ```
 
-Paths come from the arguments, or one per line from standard input. `-w` defaults to the
-terminal width. Bad input exits with status 2. `python -m shortenpath` works too.
+Paths come from the arguments, or one per line from standard input, each written as soon
+as it is read. `-w` defaults to the terminal width. Bad input exits with status 2.
+`python -m shortenpath` works too.
 
 ## Why
 

@@ -14,22 +14,25 @@ All notable changes to this project are documented here. The format follows
   their drive, UNC share or device prefix (`\\.\`, `\\?\`, `\\?\UNC\`, `\\.\UNC\`) whole and
   take both `\` and `/` as separators, except after an exact `\\?\`.
 - `display_width(text)`: terminal columns, with East Asian wide and fullwidth characters as
-  two and combining marks as none. The budget of `shorten` is now in columns.
-- Command line tool `shortenpath` (also `python -m shortenpath`).
+  two, combining marks as none and a character with the emoji presentation selector as two.
+  The budget of `shorten` is now in columns.
+- Command line tool `shortenpath` (also `python -m shortenpath`), streaming paths read from
+  standard input line by line.
 - `os.PathLike` paths and homes.
 
 ### Changed
 
 - The second argument is now `width`, in terminal columns.
 - Elision keeps the most whole names around the placeholder, then the most at the start,
-  and keeps the whole last name before the anchor when only one of them fits.
+  and keeps the whole last name before the anchor when only one of them fits, also for a
+  path with a single name.
 - A name that cannot fit is cut in the middle, keeping its start and its extension, and
   never between a letter and its combining marks.
 - Separator runs are kept as written.
 - `sep` is now optional and, when given, replaces the flavor's rules; the default home is
   only used for paths of the running system.
-- The home folder folds only on whole names, never when it is a bare root or drive, and
-  without regard to case or separator kind on Windows.
+- The home folder folds only on whole names, never when it is relative or a bare root or
+  drive, and without regard to case or separator kind on Windows.
 
 ### Fixed
 

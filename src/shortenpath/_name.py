@@ -17,9 +17,12 @@ def extension(name: str) -> str:
 def squeeze(name: str, budget: int, placeholder: str) -> str:
     """Return ``name`` cut in the middle to fit ``budget`` columns.
 
-    The extension stays whole with at least one character of the stem before it when there
-    is room for it; otherwise the columns are shared between start and end, the start taking
-    the odd one. Without room for the placeholder the start of the name is kept alone.
+    The extension stays whole with the last character of the stem before it when that
+    leaves room for the first one; otherwise the columns are shared between start and end,
+    the start taking the odd one, and the start always gets its first character when it
+    fits (the end takes every column when it does not). Without room for the placeholder
+    the start of the name is kept alone, which is empty when not even its first character
+    fits.
     """
     units = clusters(name)
     if sum(width for _, width in units) <= budget:
@@ -28,9 +31,15 @@ def squeeze(name: str, budget: int, placeholder: str) -> str:
     if room <= 0:
         return head(units, budget)[0]
     end_budget = room // 2
-    ext_width = display_width(extension(name))
-    if ext_width and room >= ext_width + 2:
-        end_budget = max(ext_width + 1, end_budget)
+    ext = extension(name)
+    stem = clusters(name[: len(name) - len(ext)])
+    if ext and len(stem) > 1:
+        keep = display_width(ext) + stem[-1][1]
+        if room >= keep + stem[0][1]:
+            end_budget = max(keep, end_budget)
+    # The start gets at least its first character; if even that cannot fit, the end takes all.
+    first = units[0][1]
+    end_budget = min(end_budget, room - first) if first <= room else room
     end, used = tail(units, end_budget)
     start, _ = head(units, room - used)
     return start + placeholder + end

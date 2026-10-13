@@ -82,11 +82,16 @@ def _fit(parts: Parts, width: int, placeholder: str) -> str:
             start = "".join(name + seps[i] for i, name in enumerate(names[:keep_head]))
             end = "".join(seps[i - 1] + names[i] for i in range(count - keep_tail, count))
             return parts.anchor + start + placeholder + end + parts.trailing
-    # The whole last name is worth more than the anchor.
+    # The whole last name is worth more than the anchor: after the placeholder and the
+    # separator as written, then a single separator, then alone.
     before = seps[-1] if count > 1 else parts.root_sep
-    bare = placeholder + before + names[-1] + parts.trailing
-    if before and display_width(bare) <= width:
-        return bare
+    for run in dict.fromkeys((before, before[-1:])):
+        bare = placeholder + run + names[-1] + parts.trailing
+        if run and display_width(bare) <= width:
+            return bare
+    for whole in (names[-1] + parts.trailing, names[-1]):
+        if display_width(whole) <= width:
+            return whole
     if count == 1:
         room = width - display_width(parts.anchor) - display_width(parts.trailing)
         if (parts.anchor or parts.trailing) and room > display_width(placeholder) + 1:

@@ -70,9 +70,19 @@ def test_the_last_resort_cut_drops_the_trailing_separator() -> None:
     assert px("/a/verylongname/", 6) == "ve...e"
 
 
-def test_a_drive_relative_name_keeps_its_drive() -> None:
-    out = shorten("C:verylongname", 13, flavor="windows", placeholder="\u2026")
-    assert out == "C:veryl" + chr(0x2026) + "gname"
+def test_a_drive_relative_name_keeps_its_drive_only_when_the_name_is_cut() -> None:
+    dots = chr(0x2026)
+    assert shorten("C:verylongname", 13, flavor="windows", placeholder=dots) == "verylongname"
+    out = shorten("C:verylongname", 11, flavor="windows", placeholder=dots)
+    assert out == "C:very" + dots + "name"
+
+
+def test_a_single_name_that_fits_alone_is_never_cut() -> None:
+    assert px("/abcdefgh", 8) == "abcdefgh"
+    path = "C:" + chr(92) + "abcdefgh"
+    assert shorten(path, 9, flavor="windows", home_tilde=False) == "abcdefgh"
+    assert px("/abcdefgh/", 9) == "abcdefgh/"
+    assert px("/abcdefgh/", 8) == "abcdefgh"
 
 
 def test_width_below_the_placeholder_keeps_the_start_of_the_name() -> None:

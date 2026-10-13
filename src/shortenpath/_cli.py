@@ -8,7 +8,8 @@ import io
 import os
 import shutil
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterable, Iterator, Sequence
+from functools import partial
 
 from ._shorten import shorten
 
@@ -57,19 +58,23 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _inputs(paths: list[str]) -> list[str]:
+def _inputs(paths: list[str]) -> Iterator[str]:
     if paths:
-        return paths
-    return [line.rstrip("\r\n") for line in sys.stdin]
+        yield from paths
+        return
+    # One line at a time, so ``tail -f log | shortenpath`` prints as lines arrive.
+    for line in sys.stdin:
+        yield line.rstrip("\r\n")
 
 
-def _write(lines: list[str]) -> None:
+def _emit(lines: Iterable[str]) -> None:
     if isinstance(sys.stdout, io.TextIOWrapper):
         # A pipe on Windows may use a legacy code page; a name it cannot hold must not crash.
         sys.stdout.reconfigure(errors="replace")
     try:
-        sys.stdout.write("".join(line + "\n" for line in lines))
-        sys.stdout.flush()
+        for line in lines:
+            sys.stdout.write(line + "\n")
+            sys.stdout.flush()
     except OSError as error:
         # The reader went away (``| head``). Windows reports EINVAL rather than EPIPE.
         if not isinstance(error, BrokenPipeError) and error.errno != errno.EINVAL:
@@ -84,20 +89,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(sys.argv[1:] if argv is None else list(argv))
     width = args.width if args.width is not None else shutil.get_terminal_size().columns
+    shrink = partial(
+        shorten,
+        width=width,
+        flavor=args.flavor,
+        home_tilde=not args.no_tilde,
+        home=args.home,
+        sep=args.sep,
+        placeholder=args.placeholder,
+    )
     try:
-        lines = [
-            shorten(
-                path,
-                width,
-                flavor=args.flavor,
-                home_tilde=not args.no_tilde,
-                home=args.home,
-                sep=args.sep,
-                placeholder=args.placeholder,
-            )
-            for path in _inputs(args.paths)
-        ]
+        # Options are checked once, before any input is read.
+        shrink("")
     except ValueError as error:
         parser.error(str(error))
-    _write(lines)
+    _emit(shrink(path) for path in _inputs(args.paths))
     return 0

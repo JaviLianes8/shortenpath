@@ -10,10 +10,10 @@ Progress:
 - [x] Typed API: `Flavor` alias, `display_width`, clean `TypeError` and `ValueError`
 - [x] Command line tool (`shortenpath`, `python -m shortenpath`)
 - [x] Contracts: fetched sources, stdlib and Win32 oracles, properties, typing, README, wheel e2e
-- [ ] Mutation run (guards changed one at a time, each must fail the suite)
+- [x] Mutation run (guards changed one at a time, each must fail the suite)
 - [x] Docs: README, CHANGELOG, docstrings, packaging metadata
-- [ ] Gates: ruff format, ruff check, mypy --strict, pytest
-- [ ] Independent review findings fixed with regression tests
+- [x] Gates: ruff format, ruff check, mypy --strict, pytest
+- [x] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
 ## Starting point
@@ -53,8 +53,10 @@ Read as a user who puts paths in prompts, status bars, tables and logs:
 - POSIX.1-2024 base definitions 3.2, 3.42, 3.146, 3.170, 3.254, 3.256 and 4.16: a filename
   never contains a slash, runs of slashes equal one, exactly two leading slashes are
   implementation defined, three or more equal one; the home directory is `HOME`.
-- Unicode UAX #11 and `EastAsianWidth.txt` for Unicode 13.0.0 to 17.0.0: classes W and F take
-  two cells in East Asian contexts; terminals follow that, plus zero width for combining marks.
+- `EastAsianWidth.txt` for Unicode 13.0.0 to 17.0.0: the W and F classes, read as two
+  columns. Zero columns for combining marks, format characters and Hangul medial and final
+  jamo, and two for a character with the emoji presentation selector, are this library's own
+  convention (the one most terminals follow), not a fetched rule.
 - The texts are third-party and not committed: `scripts/fetch_sources.py` fetches them into a
   gitignored folder checked against a tracked MANIFEST; the tests that read them skip when the
   folder is absent.

@@ -79,6 +79,9 @@ def test_properties_over_fuzzed_paths(flavor: Flavor, alphabet: list[str]) -> No
             continue
         assert shorten(out, width, flavor=flavor, home_tilde=False) == out
         parts = split(path, flavor, None)
+        if parts.names and display_width(parts.names[-1]) <= width:
+            # A last name that fits alone is never cut.
+            assert out.removesuffix(parts.trailing).endswith(parts.names[-1]), (path, width, out)
         if len(parts.names) < 2:
             continue
         last = parts.seps[-1] + parts.names[-1] + parts.trailing

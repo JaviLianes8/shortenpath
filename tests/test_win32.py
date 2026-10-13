@@ -73,8 +73,8 @@ def test_the_anchor_is_kept_whole_or_dropped_whole() -> None:
         width = rng.randint(1, len(path))
         anchor = split(path, "windows", None).anchor
         out = shorten(path, width, flavor="windows", home_tilde=False)
-        # Names are lower case letters, so anything else at the start comes from the anchor.
-        assert out.startswith(anchor) or out[:1] not in (B, "/", "C", "D"), (path, width, out)
+        # A cut anchor would still start with its first two characters.
+        assert out.startswith(anchor) or not out.startswith(anchor[:2]), (path, width, out)
 
 
 @pytest.mark.parametrize(
