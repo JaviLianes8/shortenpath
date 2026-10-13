@@ -1,0 +1,19 @@
+# Third-party sources cited by the tests. Not committed; fetch them with
+#   python scripts/fetch_sources.py
+# Revision: dotnet/docs 3ad903a7, MicrosoftDocs/win32 ca8274de, MicrosoftDocs/sdk-api 656e9656,
+#   POSIX.1-2024 (IEEE Std 1003.1-2024) base definitions, Unicode 13.0.0 to 17.0.0
+# Licence: Microsoft docs under CC BY 4.0 (see LICENSE in each docs repository); POSIX text
+#   copyright IEEE and The Open Group, read online, not redistributed; Unicode data under the
+#   Unicode License v3 (https://www.unicode.org/license.txt)
+# sha256  size  name  url
+82ed20b86d1d6fc189337703f40e95de6ec9ab624439662a8ed6ea1348cfc64c  17078  file-path-formats.md  https://raw.githubusercontent.com/dotnet/docs/3ad903a790ef39f8b58ca5fc59f5228454fc6e50/docs/standard/io/file-path-formats.md
+bf2485c9f36d278b7d96f947869e36247ff8c56eacda6b65124ad0418d7bdcec  19606  naming-a-file.md  https://raw.githubusercontent.com/MicrosoftDocs/win32/ca8274decead49403d70ceeed4af8d4ca74eaf11/desktop-src/FileIO/naming-a-file.md
+4adcf10cc3fffd67784863df6b60a5f308ee8e6ae7b561aea1590a795c9fe0da  3647  nf-shlwapi-pathcompactpathexw.md  https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/656e9656bfaef34dd29cd7ee9e1146aec17e924c/sdk-api-src/content/shlwapi/nf-shlwapi-pathcompactpathexw.md
+0037b423cc292c3cd7c55d347a2273407d156be2a161e56771b08c1c0d421d5a  182262  posix-v1-chap03.html  https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html
+3cb91dff5e1f07b9a21e0ab7318560019b0401709c68cb8f6581e334f067dc6f  70370  posix-v1-chap04.html  https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap04.html
+4f822ec7a9ebbb3138ad29bade8b9688d25b39c7a3c0b7431f01e7229e4fcb6e  179046  EastAsianWidth-13.0.0.txt  https://www.unicode.org/Public/13.0.0/ucd/EastAsianWidth.txt
+f901ac011aa32a09224d6555da71e2532c59c1d3381322829de0e3b880507250  184037  EastAsianWidth-14.0.0.txt  https://www.unicode.org/Public/14.0.0/ucd/EastAsianWidth.txt
+743e7bc435c04ab1a8459710b1c3cad56eedced5b806b4659b6e69b85d0adf2a  186337  EastAsianWidth-15.0.0.txt  https://www.unicode.org/Public/15.0.0/ucd/EastAsianWidth.txt
+b08191401dc125f4e84ef262a95754faae6b737c79538e17ea9664a63434e94e  194188  EastAsianWidth-15.1.0.txt  https://www.unicode.org/Public/15.1.0/ucd/EastAsianWidth.txt
+43adc76c0686a42cb370764eb8cfe2b2a45b10b855e5572a2db4a0eecce15d5b  199042  EastAsianWidth-16.0.0.txt  https://www.unicode.org/Public/16.0.0/ucd/EastAsianWidth.txt
+ea7ce50f3444a050333448dffef1cadd9325af55cbb764b4a2280faf52170a33  201595  EastAsianWidth-17.0.0.txt  https://www.unicode.org/Public/17.0.0/ucd/EastAsianWidth.txt
