@@ -2,16 +2,16 @@
 
 Progress:
 - [x] Brainstorm ranked improvements (this file)
-- [ ] Path forms: POSIX roots, Windows drives, UNC, `\\?\` and `\\.\` device paths, mixed separators
-- [ ] Display width: wide and fullwidth characters count two columns, combining marks none
-- [ ] Home folding to `~` that respects component boundaries and Windows case rules
-- [ ] File name kept whole when it can be, extension kept when the name is cut
-- [ ] Deterministic elision search (most segments kept, then most head segments)
-- [ ] Typed API: `Flavor` alias, `display_width`, clean `TypeError` and `ValueError`
-- [ ] Command line tool (`shortenpath`, `python -m shortenpath`)
-- [ ] Contracts: fetched sources, stdlib and Win32 oracles, properties, typing, README, wheel e2e
+- [x] Path forms: POSIX roots, Windows drives, UNC, `\\?\` and `\\.\` device paths, mixed separators
+- [x] Display width: wide and fullwidth characters count two columns, combining marks none
+- [x] Home folding to `~` that respects component boundaries and Windows case rules
+- [x] File name kept whole when it can be, extension kept when the name is cut
+- [x] Deterministic elision search (most segments kept, then most head segments)
+- [x] Typed API: `Flavor` alias, `display_width`, clean `TypeError` and `ValueError`
+- [x] Command line tool (`shortenpath`, `python -m shortenpath`)
+- [x] Contracts: fetched sources, stdlib and Win32 oracles, properties, typing, README, wheel e2e
 - [ ] Mutation run (guards changed one at a time, each must fail the suite)
-- [ ] Docs: README, CHANGELOG, docstrings, packaging metadata
+- [x] Docs: README, CHANGELOG, docstrings, packaging metadata
 - [ ] Gates: ruff format, ruff check, mypy --strict, pytest
 - [ ] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
