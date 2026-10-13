@@ -14,21 +14,21 @@ pip install shortenpath
 from shortenpath import shorten
 
 # Short paths pass through untouched.
-shorten("/etc/hosts", 40)                       # "/etc/hosts"
+shorten("/etc/hosts", 40)  # "/etc/hosts"
 
 # The home directory collapses to ~.
-shorten("/home/javi/code/app.py", home="/home/javi")   # "~/code/app.py"
+shorten("/home/javi/code/app.py", home="/home/javi")  # "~/code/app.py"
 
 # Too long for the budget: the middle is elided, head and tail stay readable.
-shorten("/a/b/c/d/e/file", 11)                  # "/a/.../file"
+shorten("/a/b/c/d/e/file", 11)  # "/a/.../file"
 shorten("/home/javi/proj/sub/deep/file.py", 20, home="/home/javi")
-                                                # "~/proj/.../file.py"
+# "~/proj/.../file.py"
 
 # When even the basename overflows, it is truncated from the front.
-shorten("/a/b/verylongfilename.py", 8)          # "...me.py"
+shorten("/a/b/verylongfilename.py", 8)  # "...me.py"
 
 # Works with any separator (Windows paths, URLs, custom roots).
-shorten("C:\\a\\b\\c\\d\\report.txt", 18, sep="\\")     # "C:\...\report.txt"
+shorten("C:\\a\\b\\c\\d\\report.txt", 18, sep="\\")  # "C:\...\report.txt"
 ```
 
 `shorten(path, max_len, *, home_tilde=True, home=None, sep=os.sep, placeholder="...")`

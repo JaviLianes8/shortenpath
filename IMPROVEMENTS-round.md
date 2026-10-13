@@ -47,8 +47,8 @@ Read as a user who puts paths in prompts, status bars, tables and logs:
   slash are both reserved; the prefix of a path decides its namespace.
 - PathCompactPathExW, MicrosoftDocs/sdk-api at 656e9656: replaces path components with an
   ellipsis to fit a character count, keeps `/` if the input used it, truncates a bare file
-  name at the end. Probed live through `shlwapi.dll` on Windows 11: it cuts inside the drive
-  and the UNC prefix (`\s...\file.txt`), cuts inside directory names (`C:\path1...\sample.txt`)
+  name at the end. Probed live through `shlwapi.dll` on Windows 11: it counts characters, not
+  columns, cuts inside the UNC server name (`\\serv...\file.txt`), cuts inside directory names (`C:\path1...\sample.txt`)
   and drops the extension when the name is cut (`...\verylon...`).
 - POSIX.1-2024 base definitions 3.2, 3.42, 3.146, 3.170, 3.254, 3.256 and 4.16: a filename
   never contains a slash, runs of slashes equal one, exactly two leading slashes are

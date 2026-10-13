@@ -1,0 +1,35 @@
+"""Cut a single name to a column budget, keeping its start and its extension."""
+
+from __future__ import annotations
+
+from ._width import clusters, display_width, head, tail
+
+
+def extension(name: str) -> str:
+    """The extension of ``name`` as ``os.path.splitext`` sees it, leading dots ignored."""
+    dot = name.rfind(".")
+    if dot <= 0 or not name[:dot].strip("."):
+        return ""
+    return name[dot:]
+
+
+def squeeze(name: str, budget: int, placeholder: str) -> str:
+    """Return ``name`` cut in the middle to fit ``budget`` columns.
+
+    The extension stays whole with at least one character of the stem before it when there
+    is room for it; otherwise the columns are shared between start and end, the start taking
+    the odd one. Without room for the placeholder the start of the name is kept alone.
+    """
+    units = clusters(name)
+    if sum(width for _, width in units) <= budget:
+        return name
+    room = budget - display_width(placeholder)
+    if room <= 0:
+        return head(units, budget)[0]
+    end_budget = room // 2
+    ext_width = display_width(extension(name))
+    if ext_width and room >= ext_width + 2:
+        end_budget = max(ext_width + 1, end_budget)
+    end, used = tail(units, end_budget)
+    start, _ = head(units, room - used)
+    return start + placeholder + end
