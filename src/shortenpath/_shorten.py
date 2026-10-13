@@ -75,22 +75,22 @@ def _fit(parts: Parts, width: int, placeholder: str) -> str:
     count = len(names)
     if count == 0:
         return squeeze(parts.render(), width, placeholder)
-    last = names[-1] + parts.trailing
+    if count > 1:
+        best = _search(parts, width - display_width(parts.anchor) - display_width(placeholder))
+        if best is not None:
+            keep_head, keep_tail = best
+            start = "".join(name + seps[i] for i, name in enumerate(names[:keep_head]))
+            end = "".join(seps[i - 1] + names[i] for i in range(count - keep_tail, count))
+            return parts.anchor + start + placeholder + end + parts.trailing
+    # The whole last name is worth more than the anchor.
+    before = seps[-1] if count > 1 else parts.root_sep
+    bare = placeholder + before + names[-1] + parts.trailing
+    if before and display_width(bare) <= width:
+        return bare
     if count == 1:
         room = width - display_width(parts.anchor) - display_width(parts.trailing)
         if (parts.anchor or parts.trailing) and room > display_width(placeholder) + 1:
             return parts.anchor + squeeze(names[0], room, placeholder) + parts.trailing
-        return squeeze(names[0], width, placeholder)
-    best = _search(parts, width - display_width(parts.anchor) - display_width(placeholder))
-    if best is not None:
-        keep_head, keep_tail = best
-        start = "".join(name + seps[i] for i, name in enumerate(names[:keep_head]))
-        cut = count - keep_tail
-        end = "".join(seps[i - 1] + names[i] for i in range(cut, count)) + parts.trailing
-        return parts.anchor + start + placeholder + end
-    bare = placeholder + seps[-1] + last
-    if display_width(bare) <= width:
-        return bare
     return squeeze(names[-1], width, placeholder)
 
 

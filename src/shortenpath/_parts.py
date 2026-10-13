@@ -19,12 +19,16 @@ _BACK_RUN = re.compile(r"\\+")
 
 @dataclass(frozen=True)
 class Parts:
-    """A path as anchor, names, the separator runs between names, and a trailing run."""
+    """A path as anchor, names, the separator runs between names, and a trailing run.
+
+    ``root_sep`` is the separator run that ends the anchor, empty when it ends in a name.
+    """
 
     anchor: str
     names: tuple[str, ...]
     seps: tuple[str, ...]
     trailing: str
+    root_sep: str = ""
 
     def render(self) -> str:
         pieces = [self.anchor]
@@ -72,21 +76,18 @@ def windows_splitroot(path: str) -> tuple[str, str, str]:
 
 def split(path: str, flavor: str, sep: str | None) -> Parts:
     """Split ``path`` into :class:`Parts` under ``flavor`` or a custom ``sep``."""
+    drive = root = ""
     if sep is not None:
         run = re.compile(f"(?:{re.escape(sep)})+")
-        anchor = ""
     elif flavor == "windows":
-        drive, root, rest = windows_splitroot(path)
-        anchor = drive + root
+        drive, root, _ = windows_splitroot(path)
         run = _BACK_RUN if path.startswith(_VERBATIM) else _WINDOWS_RUN
     else:
         run = _POSIX_RUN
-        anchor = ""
-    rest = path[len(anchor) :]
+    rest = path[len(drive + root) :]
     lead = run.match(rest)
-    if lead:
-        anchor += lead.group()
-        rest = rest[lead.end() :]
+    root_sep = root + (lead.group() if lead else "")
+    rest = rest[len(root_sep) - len(root) :]
     pieces = run.split(rest)
     gaps = run.findall(rest)
     if pieces[-1] == "" and gaps:
@@ -95,7 +96,7 @@ def split(path: str, flavor: str, sep: str | None) -> Parts:
     else:
         trailing = ""
     names = tuple(pieces) if pieces != [""] else ()
-    return Parts(anchor, names, tuple(gaps), trailing)
+    return Parts(drive + root_sep, names, tuple(gaps), trailing, root_sep)
 
 
 def _anchor_key(anchor: str, flavor: str, sep: str | None) -> str:
@@ -127,6 +128,5 @@ def fold_home(parts: Parts, home: Parts, flavor: str, sep: str | None) -> Parts:
         return parts
     if len(parts.names) == count:
         return Parts("~", (), (), parts.trailing)
-    return Parts(
-        "~" + parts.seps[count - 1], parts.names[count:], parts.seps[count:], parts.trailing
-    )
+    root_sep = parts.seps[count - 1]
+    return Parts("~" + root_sep, parts.names[count:], parts.seps[count:], parts.trailing, root_sep)
