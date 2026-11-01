@@ -15,6 +15,7 @@ Progress:
 - [x] Packaging, e2e, every available Python (items 8, 10, 13, 14)
 - [x] Gates (item 15)
 - [x] PR #3 from `release/1.0.0` and trace guard CLEAN
+- [x] QA round 1 fixes and regression checks (details below)
 - [ ] Independent reviewer (16), merge and publish (17), and five QA lenses (19)
 
 ## Baseline and API review
@@ -44,7 +45,7 @@ including the fetched Microsoft example and four pinned differences. Standard-li
 checks the segment-selection rule. Seeded hostile Unicode tests include custom selectors,
 joiners, separators, controls, surrogates, 100,000-character clusters and 20,000 components.
 
-Independent QA lenses and the independent review have not run for this release.
+QA round 1 findings and fixes appear below; independent re-review remains pending.
 
 ## Scorecard
 
@@ -67,8 +68,8 @@ Independent QA lenses and the independent review have not run for this release.
 | 15 | PASS: all four gates exit 0 independently; strict typing also includes tests |
 | 16 | Pending independent review |
 | 17 | PR #3 from `release/1.0.0`, trace guard CLEAN; merge and publishing are separate stages |
-| 18 | PASS: all 18 deliberate mutations killed by behavioral assertions |
-| 19 | Pending all five independent QA lenses; no verdicts carried forward |
+| 18 | PASS: all 18 original mutations killed; the four QA survivors now fail new contracts |
+| 19 | Round 1: a, b, c and e reported findings; d passed. Fixes await independent re-review |
 
 ## Packaging, upgrade and interpreters
 
@@ -146,14 +147,14 @@ The full suite and wheel tests passed before this round; final clean runs follow
 | M17 | CLI echoes invalid options | `test_adversarial.py::test_cli_errors_do_not_quote_secrets_or_huge_values` |
 | M18 | closed stdout flushed at shutdown | `test_cli_pipe.py::test_closed_stdout_pipe_exits_successfully_without_stderr` |
 
-## Final gates
+## Preparation gates
 
 On 2026-11-01, each command exited 0 on its own:
 `ruff format --check .` (31 files), `ruff check .`, `mypy --strict src` (7 modules),
 `mypy --strict src tests` (24 files), and `pytest` (254 passed, no skips, 34.74 seconds).
 The pytest run enabled both wheel e2e and the real PyPI upgrade, with the fetched sources,
 pytest-timeout at 300 seconds and an explicit scratch basetemp. The source and installed
-suites were green after the mutation round. No library source changed after 12794f6.
+suites were green after the mutation round. These preparation runs used source from 12794f6.
 
 Artifact SHA-256 values (the certification report is excluded from both archives):
 - Wheel: `65f6ab61b40fbf889d2f82f4407263c148a760cf6d8224dd65fcaf107e726a6e`
@@ -161,4 +162,37 @@ Artifact SHA-256 values (the certification report is excluded from both archives
 
 The release script passes PowerShell syntax parsing. Its upload path was not invoked.
 PR: https://github.com/JaviLianes8/shortenpath/pull/3, with trace guard CLEAN on 2026-11-01.
-The independent reviewer and all five QA lenses remain pending for the next stage.
+The independent reviewer and QA verification of the fixes remain pending for the next stage.
+
+## QA lenses, round 1
+
+Reviewed head: `44b8c954ba2d3d495803dee1e62196a0101850e3`, 2026-11-01.
+Fix commit: `28100f2632270af0bd4c547814f48cd1d4218565`.
+All eleven findings are addressed; none are disputed. This records fix verification,
+not new independent PASS verdicts. Lens d reported PASS with no findings on the reviewed head.
+
+| Finding | Change and verification |
+| --- | --- |
+| A-001 | README, metadata and `shorten` docstring qualify preservation by budget; runnable small-budget example passes |
+| A-002 | `display_width` docstring names soft hyphen and demonstrates its one-column width |
+| B-001 | Presentation selectors adjust each joined component; all 1,468 freshly fetched Emoji 16 ZWJ sequences pass width and budget checks |
+| B-002 | Windows home folding requires a volume and root; both slash spellings and qualified-home controls pass |
+| C-001 | Linear prefix-link literal matcher replaces repeated regex searches; 3,000 seeded reference comparisons and near-match scaling pass |
+| C-002 | Strict stdin decoding failures emit a fixed diagnostic and exit 2; subprocess and installed-console checks pass |
+| C-003 | Built-in subclass values are normalized without overridden methods; validation and budget regressions cover all text arguments and path-provider results |
+| E-01 | RuntimeError/OSError identity is pinned for path and home providers; lens e mutation M10 is killed |
+| E-02 | Windows custom-separator homes have case-sensitive positive/negative controls; lens e mutation M35 is killed |
+| E-03 | Inclusive Hangul ranges retain zero width at unassigned positions; public boundary tests kill lens e mutation M44 |
+| E-04 | Exact stdin spaces and tabs, whitespace-only paths and both line endings are pinned; lens e mutation M52 is killed |
+
+Behavior regressions were added before implementation changes. Against the reviewed source,
+the final public regression cases produce 24 failures and 19 passes; the separate scaling
+contract also fails. All four mutation baselines pass and all four mutants fail assertions.
+Median near-match timings at 8,000/16,000/32,000/64,000 characters changed from
+0.1249/0.4865/2.1934/7.7168 seconds to 0.0768/0.1482/0.2316/0.4379 seconds.
+Timing assertions stay outside the deterministic unit suite. Evidence and reproduction
+scripts are retained outside the repository in `shortenpath-cert/fix-r1/`.
+On CPython 3.14.6, `ruff format --check .`, `ruff check .`, `mypy --strict src` and
+`mypy --strict src tests` exit 0. Pytest: 304 passed, no skips, with a 300-second timeout,
+scratch basetemp, verified sources, installed wheel and PyPI 0.2.0 upgrade enabled.
+Strict wheel/sdist description checks also pass. Interpreter availability is unchanged.
