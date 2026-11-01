@@ -8,6 +8,16 @@ from dataclasses import dataclass
 from typing import Literal
 
 Flavor = Literal["native", "posix", "windows"]
+Flavor.__doc__ = """Path rule names accepted by ``shorten``.
+
+>>> from typing import get_args
+>>> from shortenpath import Flavor, shorten
+>>> get_args(Flavor)
+('native', 'posix', 'windows')
+>>> rule: Flavor = "posix"
+>>> shorten("/a/b/c/d/e/file", 11, flavor=rule, home_tilde=False)
+'/a/.../file'
+"""
 
 _BACK = "\\"
 _VERBATIM = _BACK * 2 + "?" + _BACK
@@ -42,11 +52,13 @@ class Parts:
 
 def resolve(flavor: str) -> str:
     """Return ``"posix"`` or ``"windows"`` for a flavor name."""
+    if not isinstance(flavor, str):
+        raise TypeError("flavor must be str")
     if flavor == "native":
         return "windows" if os.name == "nt" else "posix"
     if flavor in ("posix", "windows"):
         return flavor
-    raise ValueError(f"flavor must be 'native', 'posix' or 'windows', not {flavor!r}")
+    raise ValueError("flavor must be 'native', 'posix' or 'windows'")
 
 
 def windows_splitroot(path: str) -> tuple[str, str, str]:

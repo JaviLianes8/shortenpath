@@ -6,6 +6,40 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-01
+
+### Stable
+
+- `shorten`, `display_width` and the `Flavor` literal alias, with the same signatures,
+  defaults and path-selection rules as 0.2.0. Python 3.10 and newer are supported.
+- The `shortenpath` command and `python -m shortenpath`, including streaming stdin,
+  terminal-width defaults and exit status 2 for invalid arguments.
+
+### Changed
+
+- Invalid argument errors no longer include input values or type names. CLI usage errors
+  retain a fixed explanation for bad widths and empty options; other usage errors ask for
+  `--help` without quoting the command line.
+- Non-string `sep`, `placeholder` and `flavor` now raise `TypeError` instead of `ValueError`.
+  Non-boolean `home_tilde` now raises `TypeError` instead of accepting truthy values.
+  `home` remains ignored when home folding is disabled.
+- Invalid `__fspath__` results and `TypeError` raised by `__fspath__` receive a fixed
+  `TypeError` message. Other exceptions raised by user-supplied path objects still propagate.
+- Closed-pipe handling disables the failed stdout stream instead of opening a null device.
+  Its successful exit status is unchanged.
+
+### Fixed
+
+- Long combining-mark and zero-width-joiner runs are assembled in linear time instead
+  of repeatedly copying the growing cluster.
+- Emoji selectors at joined piece boundaries can no longer exceed the requested width:
+  a final cluster-aligned prefix cut is applied when the joined result would overflow.
+
+### Added
+
+- Runnable public docstrings, the GUIDE, verified source hashes, stronger contract and
+  property tests, installed-wheel upgrade checks and explicit source-distribution contents.
+
 ## [0.2.0]
 
 ### Added

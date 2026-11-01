@@ -75,10 +75,10 @@ def test_a_dash_led_path_after_double_dash(capsys: pytest.CaptureFixture[str]) -
 @pytest.mark.parametrize(
     ("argv", "message"),
     [
-        (["-w", "0", "x"], "width must be at least 1, not 0"),
-        (["-w", "-3", "x"], "width must be at least 1, not -3"),
-        (["-w", "wide", "x"], "width must be a whole number, not 'wide'"),
-        (["-f", "mac", "x"], "invalid choice: 'mac'"),
+        (["-w", "0", "x"], "width must be at least 1"),
+        (["-w", "-3", "x"], "width must be at least 1"),
+        (["-w", "wide", "x"], "width must be a whole number"),
+        (["-f", "mac", "x"], "invalid arguments"),
         (["-w", "5", "--sep", "", "x"], "sep must be a non-empty string"),
         (["-w", "5", "--placeholder", "", "x"], "placeholder must be a non-empty string"),
     ],

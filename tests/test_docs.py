@@ -102,3 +102,34 @@ def test_every_source_file_stays_under_two_hundred_lines() -> None:
 def test_sources_are_ascii() -> None:
     for path in [*ROOT.glob("src/**/*.py"), *ROOT.glob("tests/*.py"), *ROOT.glob("scripts/*")]:
         assert path.read_text(encoding="utf-8").isascii(), path
+
+
+def test_guide_examples_print_their_documented_results(capsys: pytest.CaptureFixture[str]) -> None:
+    guide = (ROOT / "GUIDE.md").read_text(encoding="utf-8")
+    blocks = re.findall(r"```python\n(.*?)```", guide, flags=re.DOTALL)
+    assert blocks
+    for block in blocks:
+        exec(compile(block, "GUIDE.md", "exec"), {"__name__": "guide"})
+        assert capsys.readouterr().out.splitlines() == _expected(block)
+
+
+def test_readme_links_are_absolute_and_include_the_release_docs() -> None:
+    links = re.findall(r"\]\(([^)]+)\)", _readme())
+    assert all(link.startswith("https://") for link in links)
+    assert any(link.endswith("/GUIDE.md") for link in links)
+    assert any(link.endswith("/CHANGELOG.md") for link in links)
+    assert (
+        "[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)"
+        in _readme()
+    )
+
+
+def test_release_metadata_is_stable_and_dependency_free() -> None:
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.0.0"' in text
+    assert 'requires-python = ">=3.10"' in text
+    assert '"Development Status :: 5 - Production/Stable"' in text
+    assert "dependencies = []" in text
+    assert 'license = "MIT"' in text
+    for field in ("Homepage", "Source", "Issues", "Changelog"):
+        assert re.search(rf'^{field} = "https://', text, re.MULTILINE)

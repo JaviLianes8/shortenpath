@@ -32,9 +32,17 @@ def display_width(text: str) -> int:
     East Asian Wide and Fullwidth characters take two columns; combining marks, format
     characters and Hangul medial and final jamo take none; a character followed by the
     emoji presentation selector takes two; everything else takes one.
+
+    This is a display convention, not terminal emulation. Controls take one column;
+    joined emoji are counted as their parts. Widths use Python's Unicode database.
+    Non-text input raises ``TypeError`` without quoting the input.
+
+    >>> from shortenpath import display_width
+    >>> display_width("a\u0301\u65e5")
+    3
     """
     if not isinstance(text, str):
-        raise TypeError(f"text must be str, not {type(text).__name__}")
+        raise TypeError("text must be str")
     return sum(width for _, width in clusters(text))
 
 
@@ -47,16 +55,20 @@ def clusters(text: str) -> list[tuple[str, int]]:
     """
     units: list[tuple[str, int]] = []
     glue = False
-    for char in text:
+    start = total = 0
+    for index, char in enumerate(text):
         width = char_width(char)
-        if units and (width == 0 or glue):
-            last, last_width = units[-1]
+        if index and (width == 0 or glue):
             if char == _EMOJI_PRESENTATION:
-                last_width = max(last_width, 2)
-            units[-1] = (last + char, last_width + width)
+                total = max(total, 2)
+            total += width
         else:
-            units.append((char, width))
+            if index:
+                units.append((text[start:index], total))
+            start, total = index, width
         glue = char == _ZERO_WIDTH_JOINER
+    if text:
+        units.append((text[start:], total))
     return units
 
 
