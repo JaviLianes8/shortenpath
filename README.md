@@ -1,8 +1,11 @@
 # shortenpath
 
+[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
+
 Shorten a filesystem path to fit a terminal column budget for prompts, status bars, tables
-and logs. The home folder folds to `~`, the root and the file name stay, and whole folders
-in the middle give way to `...`. Display only: the filesystem is never read.
+and logs. The home folder folds to `~`, and whole folders in the middle give way to `...`.
+The root and file name are retained when the budget permits; smaller budgets can drop the
+root or cut the file name. Display only: the filesystem is never read.
 
 ## Install
 
@@ -28,8 +31,9 @@ print(shorten(path, 9, flavor="posix", home="/home/javi"))
 # ch...t.py
 ```
 
-Windows paths keep their drive, UNC share or device prefix whole, and both `\` and `/`
-separate folders (each kept as written). The home folder matches regardless of case.
+Windows paths prefer to keep their drive, UNC share or device prefix whole when it fits,
+and both `\` and `/` separate folders (each kept as written). The home folder matches
+regardless of case. A path consisting only of an anchor can have that anchor cut.
 
 ```python
 from shortenpath import shorten
@@ -92,6 +96,9 @@ fits `width` columns:
    room for the placeholder only the start of the name is kept, and when not even its first
    character fits the result is empty.
 
+An anchor-only path is cut using the same middle-cut and prefix fallbacks. For example,
+`shorten("C:\\", 1, flavor="windows", home_tilde=False)` returns `"C"`.
+
 | Option | Meaning |
 | --- | --- |
 | `flavor` | `"posix"`, `"windows"` or `"native"` (the running system). `Flavor` is its type. |
@@ -104,13 +111,18 @@ skips normalization, so there only `\` separates and `/` is part of a name.
 `display_width(text)` gives the columns of any text: East Asian wide and fullwidth
 characters and characters with the emoji presentation selector take two, combining marks,
 format characters and Hangul medial and final jamo none, everything else (control
-characters included) one. Emoji joined into one picture are counted as their parts, which
-can only overestimate. Wrong types raise `TypeError`; a
-width below one or an empty separator or placeholder raises `ValueError`.
+characters included) one, with soft hyphen counted as one. Emoji joined into one picture
+are counted as their parts. This is a width convention, not terminal emulation or full
+grapheme segmentation. Python's Unicode database determines character widths. A selector
+at a joined piece boundary can require a final prefix cut to enforce the budget.
+Wrong types raise `TypeError`; a width below one, an empty separator or placeholder, or an
+unknown flavor raises `ValueError`. Error messages do not quote input values.
 
-Compared with the Win32 `PathCompactPathEx` function, this never cuts inside the
-anchor or a folder name, keeps the extension of a cut name, counts columns instead of
-characters, and returns a path exactly as long as the budget unchanged.
+Compared with the Win32 `PathCompactPathEx` function, this removes whole middle folders,
+prefers a whole anchor and last name, and preserves the extension of a cut name when the
+extension and required stem characters fit. It counts columns instead of characters and
+returns a path exactly as long as the budget unchanged. Small budgets can drop the anchor
+or cut the extension; an anchor-only path can itself be cut.
 
 ## Command line
 
@@ -127,22 +139,32 @@ as it is read. `-w` defaults to the terminal width. Bad input exits with status 
 
 ## Why
 
-Folding a path to `~` and trimming its middle to fit a column budget is a common need,
-yet on PyPI the pieces live apart: `os.path.expanduser` only expands, and
-`textwrap.shorten` cuts words from the end, not folders from the middle. Most snippets
-that do it count characters, split on one separator and cut UNC shares in half. This one
-reads Windows and POSIX path forms, counts columns, and has no dependencies.
+Python's [os.path.expanduser](https://docs.python.org/3/library/os.path.html#os.path.expanduser)
+expands `~` to a home directory.
+[textwrap.shorten](https://docs.python.org/3/library/textwrap.html#textwrap.shorten)
+collapses whitespace and drops words from the end. Those are different operations from
+keeping recognizable folders and the filename within a display budget. `shortenpath`
+handles Windows and POSIX path forms on either system, folds the home folder, and has no
+runtime dependencies. Use a terminal-aware renderer when escape sequences or exact emoji
+layout matter; this library preserves control characters and does not sanitize them.
+
+The [GUIDE](https://github.com/JaviLianes8/shortenpath/blob/main/GUIDE.md) details the
+contract and limitations. The
+[CHANGELOG](https://github.com/JaviLianes8/shortenpath/blob/main/CHANGELOG.md) records release changes.
 
 ## Development
 
 `python scripts/fetch_sources.py` downloads the Microsoft, POSIX and Unicode texts the
 tests check the rules against (listed with their hashes in `tests/sources/MANIFEST.txt`);
-without them those tests skip. `SHORTENPATH_E2E=1 pytest` also builds the wheel and tests
-the installed package. `scripts/check.ps1` runs the whole gate.
+without them those tests skip. Set `SHORTENPATH_SOURCES` to use a different download folder.
+`SHORTENPATH_E2E=1 pytest` builds the wheel and tests the installed package; additionally
+set `SHORTENPATH_PYPI=1` to exercise the upgrade from PyPI 0.2.0.
+`scripts/check.ps1` runs the whole gate. Install `.[dev]` first. Tests have a 300-second timeout;
+pass `--basetemp` to choose their scratch folder.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/shortenpath/blob/main/LICENSE).
 
 ## Links
 

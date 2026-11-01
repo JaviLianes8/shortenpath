@@ -1,5 +1,6 @@
 # Third-party sources cited by the tests. Not committed; fetch them with
 #   python scripts/fetch_sources.py
+# All eleven sources fetched and hashes verified on 2026-11-01.
 # Revision: dotnet/docs 3ad903a7, MicrosoftDocs/win32 ca8274de, MicrosoftDocs/sdk-api 656e9656,
 #   POSIX.1-2024 (IEEE Std 1003.1-2024) base definitions, Unicode 13.0.0 to 17.0.0
 # Licence: Microsoft docs under CC BY 4.0 (see LICENSE in each docs repository); POSIX text

@@ -6,7 +6,9 @@ The expected anchors below are worked out by hand from the descriptions on those
 
 from __future__ import annotations
 
+import hashlib
 import html
+import os
 import re
 import sys
 import unicodedata
@@ -19,7 +21,8 @@ from shortenpath._name import squeeze
 from shortenpath._parts import split
 from shortenpath._width import char_width
 
-SOURCES = Path(__file__).resolve().parent / "sources"
+MANIFEST = Path(__file__).resolve().parent / "sources" / "MANIFEST.txt"
+SOURCES = Path(os.environ.get("SHORTENPATH_SOURCES", str(MANIFEST.parent)))
 B = "\\"
 
 
@@ -27,7 +30,11 @@ def _read(name: str) -> str:
     path = SOURCES / name
     if not path.is_file():
         pytest.skip(f"{name} not fetched; run scripts/fetch_sources.py")
-    return path.read_text(encoding="utf-8")
+    data = path.read_bytes()
+    line = next(line for line in MANIFEST.read_text().splitlines() if f"  {name}  " in line)
+    digest, size, _, _ = line.split()
+    assert len(data) == int(size) and hashlib.sha256(data).hexdigest() == digest, name
+    return data.decode("utf-8")
 
 
 def _plain(name: str) -> str:

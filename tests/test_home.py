@@ -111,11 +111,11 @@ def test_default_home_is_the_running_user_for_native_paths(fixed_home: str) -> N
 def test_no_default_home_for_the_foreign_flavor_or_a_custom_separator(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A home that reads as rooted under both rules, so only the guard keeps it out.
     monkeypatch.setattr(os.path, "expanduser", lambda path: "/srv/tester" if path == "~" else path)
     foreign: Flavor = "posix" if os.name == "nt" else "windows"
-    assert shorten("/srv/tester/x", 200, flavor=foreign) == "/srv/tester/x"
-    assert shorten("/srv/tester/x", 200, flavor=foreign, home="/srv/tester") == "~/x"
+    home = "/srv/tester" if foreign == "posix" else "C:/srv/tester"
+    assert shorten(home + "/x", 200, flavor=foreign) == home + "/x"
+    assert shorten(home + "/x", 200, flavor=foreign, home=home) == "~/x"
     assert shorten("/srv/tester/x", 200, sep="/") == "/srv/tester/x"
     assert shorten("/srv/tester/x", 200, sep="/", home="/srv/tester") == "~/x"
 

@@ -8,7 +8,7 @@ from itertools import accumulate
 
 from ._name import squeeze
 from ._parts import Flavor, Parts, fold_home, resolve, split
-from ._width import display_width
+from ._width import clusters, display_width, head
 
 _PLACEHOLDER = "..."
 
@@ -27,18 +27,44 @@ def shorten(
 
     ``flavor`` picks the path rules (``"posix"``, ``"windows"`` or ``"native"`` for the
     running system); ``sep`` replaces them with a single custom separator. The home directory
-    collapses to ``~`` when ``home_tilde`` is set. A path still too wide keeps its anchor
-    (root, drive, UNC share or device prefix) and its last name, and as many whole segments
-    around ``placeholder`` as fit. Display only: the filesystem is never read.
+    collapses to ``~`` when ``home_tilde`` is set. A path still too wide prefers its anchor
+    and last name, keeping whole segments around ``placeholder`` when they fit. Smaller
+    budgets can drop the anchor or cut the last name; its extension is kept only if it and
+    the required stem characters fit. An anchor-only path can itself be cut.
+    Display only: the filesystem is never read.
+
+    ``width`` is a positive integer (not bool). String and integer subclasses use their
+    built-in values without invoking overrides. Wrong types raise ``TypeError``;
+    nonpositive width, empty separator/placeholder or unknown flavor raise ``ValueError``.
+    ``home`` is ignored when ``home_tilde=False``. A context-sensitive emoji selector
+    may require a final prefix cut at a cluster boundary to enforce the budget.
+
+    >>> from shortenpath import shorten
+    >>> shorten("/a/b/c/d/e/file", 11, flavor="posix", home_tilde=False)
+    '/a/.../file'
+    >>> shorten("/home/u/code.py", 40, flavor="posix", home="/home/u")
+    '~/code.py'
+    >>> shorten("filename.extension", 9, flavor="posix", home_tilde=False)
+    'fil...ion'
     """
     text = _text(path, "path")
     if isinstance(width, bool) or not isinstance(width, int):
-        raise TypeError(f"width must be int, not {type(width).__name__}")
+        raise TypeError("width must be int")
+    width = int.__int__(width)
     if width < 1:
         raise ValueError("width must be at least 1")
-    if sep is not None and (not isinstance(sep, str) or not sep):
+    if not isinstance(home_tilde, bool):
+        raise TypeError("home_tilde must be bool")
+    if sep is not None:
+        if not isinstance(sep, str):
+            raise TypeError("sep must be str or None")
+        sep = str.__str__(sep)
+    if sep == "":
         raise ValueError("sep must be a non-empty string")
-    if not isinstance(placeholder, str) or not placeholder:
+    if not isinstance(placeholder, str):
+        raise TypeError("placeholder must be str")
+    placeholder = str.__str__(placeholder)
+    if not placeholder:
         raise ValueError("placeholder must be a non-empty string")
     rules = resolve(flavor)
     parts = split(text, rules, sep)
@@ -49,15 +75,20 @@ def shorten(
     text = parts.render()
     if display_width(text) <= width:
         return text
-    return _fit(parts, width, placeholder)
+    result = _fit(parts, width, placeholder)
+    # Selectors can widen the preceding character when separately measured pieces join.
+    return result if display_width(result) <= width else head(clusters(result), width)[0]
 
 
 def _text(value: object, label: str) -> str:
     if isinstance(value, os.PathLike):
-        value = os.fspath(value)
+        try:
+            value = os.fspath(value)
+        except TypeError:
+            raise TypeError(f"{label} must be str or os.PathLike[str]") from None
     if not isinstance(value, str):
-        raise TypeError(f"{label} must be str or os.PathLike[str], not {type(value).__name__}")
-    return value
+        raise TypeError(f"{label} must be str or os.PathLike[str]")
+    return str.__str__(value)
 
 
 def _home(home: object, rules: str, sep: str | None) -> str:

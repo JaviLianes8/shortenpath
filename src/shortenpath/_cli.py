@@ -5,29 +5,47 @@ from __future__ import annotations
 import argparse
 import errno
 import io
-import os
 import shutil
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from functools import partial
+from typing import NoReturn
 
 from ._shorten import shorten
+
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str) -> NoReturn:
+        safe = next(
+            (
+                text
+                for text in (
+                    "width must be a whole number",
+                    "width must be at least 1",
+                    "sep must be a non-empty string",
+                    "placeholder must be a non-empty string",
+                )
+                if message.endswith(text)
+            ),
+            "invalid arguments; use --help for usage",
+        )
+        super().error(safe)
 
 
 def _width(text: str) -> int:
     try:
         value = int(text)
     except ValueError:
-        raise argparse.ArgumentTypeError(f"width must be a whole number, not {text!r}") from None
+        raise argparse.ArgumentTypeError("width must be a whole number") from None
     if value < 1:
-        raise argparse.ArgumentTypeError(f"width must be at least 1, not {value}")
+        raise argparse.ArgumentTypeError("width must be at least 1")
     return value
 
 
 def _parser() -> argparse.ArgumentParser:
     from . import __version__
 
-    parser = argparse.ArgumentParser(
+    parser = _Parser(
         prog="shortenpath",
         description="Shorten paths to fit a number of terminal columns, one per line. "
         "Without PATH arguments, paths are read one per line from standard input.",
@@ -79,9 +97,8 @@ def _emit(lines: Iterable[str]) -> None:
         # The reader went away (``| head``). Windows reports EINVAL rather than EPIPE.
         if not isinstance(error, BrokenPipeError) and error.errno != errno.EINVAL:
             raise
-        devnull = os.open(os.devnull, os.O_WRONLY)
-        os.dup2(devnull, sys.stdout.fileno())
-        os.close(devnull)
+        # Avoid a second flush of the failed stream during interpreter shutdown.
+        sys.stdout = None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -103,5 +120,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         shrink("")
     except ValueError as error:
         parser.error(str(error))
-    _emit(shrink(path) for path in _inputs(args.paths))
+    try:
+        _emit(shrink(path) for path in _inputs(args.paths))
+    except UnicodeDecodeError:
+        sys.stderr.write("shortenpath: cannot decode standard input\n")
+        return 2
     return 0

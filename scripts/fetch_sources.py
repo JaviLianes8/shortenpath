@@ -7,15 +7,18 @@ and SHA-256 in the manifest; a mismatch aborts without keeping the file.
 from __future__ import annotations
 
 import hashlib
+import os
 import sys
 import urllib.request
 from pathlib import Path
 
-FOLDER = Path(__file__).resolve().parents[1] / "tests" / "sources"
+MANIFEST = Path(__file__).resolve().parents[1] / "tests" / "sources" / "MANIFEST.txt"
+FOLDER = Path(os.environ.get("SHORTENPATH_SOURCES", str(MANIFEST.parent)))
 
 
 def main() -> int:
-    for line in (FOLDER / "MANIFEST.txt").read_text(encoding="utf-8").splitlines():
+    FOLDER.mkdir(parents=True, exist_ok=True)
+    for line in MANIFEST.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#"):
             continue
         digest, size, name, url = line.split()
