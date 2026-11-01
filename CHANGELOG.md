@@ -34,6 +34,8 @@ All notable changes to this project are documented here. The format follows
   of repeatedly copying the growing cluster.
 - Emoji selectors at joined piece boundaries can no longer exceed the requested width:
   a final cluster-aligned prefix cut is applied when the joined result would overflow.
+- The release script checks whether the version exists, allowing upgrades to an existing
+  project. It requires a clean checkout, runs the gate and uses a fresh output directory.
 
 ### Added
 

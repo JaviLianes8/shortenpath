@@ -11,8 +11,8 @@ pip install -r requirements-dev.txt
 ## Before you open a pull request
 
 - Keep public API in `src/shortenpath/__init__.py`; internals live in `_`-prefixed modules.
-- Add a test for the behaviour you change. Tests inject time, disk and network; they
-  never touch the real thing.
+- Add a test for the behaviour you change. Unit tests inject dependencies; installed-wheel
+  tests use disposable directories and the optional upgrade test downloads the PyPI release.
 - Run `python scripts/fetch_sources.py` once so the tests can check the rules against the
   Microsoft, POSIX and Unicode texts, then `scripts/check.ps1` (format, lint, types, tests)
   and make sure it passes. `SHORTENPATH_E2E=1` adds the installed-wheel test.

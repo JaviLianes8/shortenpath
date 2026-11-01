@@ -55,26 +55,28 @@ print("e2e ok")
 
 def _run(*cmd: str | Path, cwd: Path | None = None, stdin: bytes = b"") -> bytes:
     result = subprocess.run(
-        [str(c) for c in cmd], cwd=cwd, input=stdin, capture_output=True, check=False
+        [str(c) for c in cmd], cwd=cwd, input=stdin, capture_output=True, check=False, timeout=240
     )
     assert result.returncode == 0, result.stderr.decode(errors="replace")
     return result.stdout
 
 
-def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
-    dist = tmp_path / "dist"
-    _run(sys.executable, "-m", "build", "--wheel", "--outdir", dist, ROOT)
-    (wheel,) = dist.glob("shortenpath-*.whl")
+def test_installed_wheel_end_to_end(tmp_path: Path, artifacts: tuple[Path, Path]) -> None:
+    wheel, sdist = artifacts
     names = zipfile.ZipFile(wheel).namelist()
     assert not [name for name in names if "sources" in name or name.startswith("tests/")]
     assert {"shortenpath/py.typed", "shortenpath/__main__.py", "shortenpath/_cli.py"} <= set(names)
+    assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
+    assert all(name.startswith(("shortenpath/", "shortenpath-1.0.0.dist-info/")) for name in names)
 
-    _run(sys.executable, "-m", "build", "--sdist", "--outdir", dist, ROOT)
-    (sdist,) = dist.glob("shortenpath-*.tar.gz")
     with tarfile.open(sdist) as archive:
         members = archive.getnames()
     data = [name for name in members if "/tests/sources/" in name]
     assert data == [name for name in data if name.endswith("/MANIFEST.txt")]
+    assert "shortenpath-1.0.0/LICENSE" in members
+    assert not any(
+        "__pycache__" in name or "CERT-" in name or "IMPROVEMENTS" in name for name in members
+    )
 
     env_dir = tmp_path / "venv"
     venv.create(env_dir, with_pip=True)
@@ -103,6 +105,8 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
         stdin=b"/a/b/c/d/e/g\n",
     )
     assert out.decode().split() == ["/a/b/.../g"]
-    bad = subprocess.run([str(script), "-w", "0", "x"], cwd=work, capture_output=True, check=False)
+    bad = subprocess.run(
+        [str(script), "-w", "0", "x"], cwd=work, capture_output=True, check=False, timeout=30
+    )
     assert bad.returncode == 2
     assert b"width must be at least 1" in bad.stderr
