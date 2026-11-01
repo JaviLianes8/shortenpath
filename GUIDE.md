@@ -23,6 +23,9 @@ print(display_width("a\u0301\u65e5"))
 placeholder="...") -> str` accepts `str` or `os.PathLike[str]` for the path and home.
 The width is a positive `int`, excluding `bool`. The parameter names, keyword-only options,
 defaults and three public exports are part of the 1.0 contract.
+Accepted `str` and `int` subclasses are normalized to their built-in values before
+validation and processing, without calling overridden conversion, comparison or iteration
+methods. This includes strings returned by `__fspath__`; boolean widths remain invalid.
 
 `display_width(text: str) -> int` returns a nonnegative column estimate. Empty text has
 width zero; an empty path stays empty. There is no fixed maximum input length or width.
@@ -39,7 +42,9 @@ the flavor's path grammar and does not recognize URL schemes or drive prefixes.
 Home folding compares whole components. POSIX comparisons are case sensitive; Windows
 uses lowercase comparisons and treats either separator kind alike. Two leading POSIX
 slashes are distinct from one; three or more compare as one. Relative homes and bare
-roots do not fold. Custom separators use case-sensitive component comparisons.
+roots do not fold. A Windows home must have both a drive/UNC/device volume and a root:
+`\Users\javi` and `/Users/javi` are relative to the current drive and do not fold.
+Custom separators use case-sensitive component comparisons and their own root grammar.
 Without an explicit home, only native paths with no custom separator use
 `os.path.expanduser("~")`. If the home is unknown, nothing folds.
 
@@ -64,7 +69,11 @@ is kept whenever it fits; otherwise the suffix may take all the remaining room.
 
 East Asian W/F code points take two columns. Mn/Me/Cf code points and Hangul medial/final
 jamo take zero, except soft hyphen takes one. A variation selector U+FE0F raises its
-cluster to at least two columns. Other code points, including controls, take one.
+joined component to at least two columns before the components are summed. Other code
+points, including controls, take one.
+The zero-width ranges U+1160 through U+11FF and U+D7B0 through U+D7FF are inclusive,
+including their unassigned positions. Outside those ranges, unassigned code points follow
+the same category and East Asian width rules as other code points.
 The Unicode database bundled with Python determines categories and East Asian widths,
 so newly assigned characters can measure differently across Python releases.
 
@@ -80,7 +89,8 @@ only its longest fitting cluster-aligned prefix is returned, even if this drops 
 The guarantee is always `display_width(result) <= width`.
 
 Cluster assembly is linear in text length. Selecting whole segments takes O(n log n)
-time and O(n) memory for n components, plus linear work in the input text.
+time and O(n) memory for n components, plus linear work in the input text and custom
+separator length. Custom separator matching uses nonoverlapping literal occurrences.
 
 ## Errors and command line
 
@@ -101,6 +111,9 @@ Use `--` before a path beginning with `-`. `-w` defaults to the terminal width (
 unavailable). `-f` chooses the flavor. `--home`, `--no-tilde`, `--sep`, `--placeholder`,
 `--help` and `--version` are supported. Each output line is flushed immediately.
 Invalid options exit 2 before stdin is read; success and a closed output pipe exit 0.
+Stdin lines lose only their line endings; spaces and tabs remain part of each path.
+Input decoding failures exit 2 with `shortenpath: cannot decode standard input`, without
+quoting the input or printing a traceback. The stream's configured decoder is respected.
 Unencodable output characters use replacement characters for the stream's encoding.
 
 ## Upgrading from 0.2.0
@@ -108,5 +121,7 @@ Unencodable output characters use replacement characters for the stream's encodi
 Install with `python -m pip install --upgrade shortenpath`. Names, signatures, default
 values and ordinary path results are unchanged. Callers passing invalid option types
 must now catch `TypeError`. Do not depend on old input-quoting error text. A selector
-placeholder may produce a shorter result to honor the budget. The
+placeholder may produce a shorter result to honor the budget. Joined emoji selectors now
+adjust each component, so some joined emoji require a larger budget. Current-drive-relative
+Windows homes no longer fold. Built-in subclasses use their stored values. The
 [CHANGELOG](https://github.com/JaviLianes8/shortenpath/blob/main/CHANGELOG.md) lists every change.

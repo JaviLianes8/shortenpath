@@ -120,5 +120,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         shrink("")
     except ValueError as error:
         parser.error(str(error))
-    _emit(shrink(path) for path in _inputs(args.paths))
+    try:
+        _emit(shrink(path) for path in _inputs(args.paths))
+    except UnicodeDecodeError:
+        sys.stderr.write("shortenpath: cannot decode standard input\n")
+        return 2
     return 0

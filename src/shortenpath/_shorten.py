@@ -27,11 +27,14 @@ def shorten(
 
     ``flavor`` picks the path rules (``"posix"``, ``"windows"`` or ``"native"`` for the
     running system); ``sep`` replaces them with a single custom separator. The home directory
-    collapses to ``~`` when ``home_tilde`` is set. A path still too wide keeps its anchor
-    (root, drive, UNC share or device prefix) and its last name, and as many whole segments
-    around ``placeholder`` as fit. Display only: the filesystem is never read.
+    collapses to ``~`` when ``home_tilde`` is set. A path still too wide prefers its anchor
+    and last name, keeping whole segments around ``placeholder`` when they fit. Smaller
+    budgets can drop the anchor or cut the last name; its extension is kept only if it and
+    the required stem characters fit. An anchor-only path can itself be cut.
+    Display only: the filesystem is never read.
 
-    ``width`` is a positive integer (not bool). Wrong types raise ``TypeError``;
+    ``width`` is a positive integer (not bool). String and integer subclasses use their
+    built-in values without invoking overrides. Wrong types raise ``TypeError``;
     nonpositive width, empty separator/placeholder or unknown flavor raise ``ValueError``.
     ``home`` is ignored when ``home_tilde=False``. A context-sensitive emoji selector
     may require a final prefix cut at a cluster boundary to enforce the budget.
@@ -41,20 +44,26 @@ def shorten(
     '/a/.../file'
     >>> shorten("/home/u/code.py", 40, flavor="posix", home="/home/u")
     '~/code.py'
+    >>> shorten("filename.extension", 9, flavor="posix", home_tilde=False)
+    'fil...ion'
     """
     text = _text(path, "path")
     if isinstance(width, bool) or not isinstance(width, int):
         raise TypeError("width must be int")
+    width = int.__int__(width)
     if width < 1:
         raise ValueError("width must be at least 1")
     if not isinstance(home_tilde, bool):
         raise TypeError("home_tilde must be bool")
-    if sep is not None and not isinstance(sep, str):
-        raise TypeError("sep must be str or None")
+    if sep is not None:
+        if not isinstance(sep, str):
+            raise TypeError("sep must be str or None")
+        sep = str.__str__(sep)
     if sep == "":
         raise ValueError("sep must be a non-empty string")
     if not isinstance(placeholder, str):
         raise TypeError("placeholder must be str")
+    placeholder = str.__str__(placeholder)
     if not placeholder:
         raise ValueError("placeholder must be a non-empty string")
     rules = resolve(flavor)
@@ -79,7 +88,7 @@ def _text(value: object, label: str) -> str:
             raise TypeError(f"{label} must be str or os.PathLike[str]") from None
     if not isinstance(value, str):
         raise TypeError(f"{label} must be str or os.PathLike[str]")
-    return value
+    return str.__str__(value)
 
 
 def _home(home: object, rules: str, sep: str | None) -> str:

@@ -27,6 +27,9 @@ All notable changes to this project are documented here. The format follows
   `TypeError` message. Other exceptions raised by user-supplied path objects still propagate.
 - Closed-pipe handling disables the failed stdout stream instead of opening a null device.
   Its successful exit status is unchanged.
+- Accepted `str` and `int` subclasses now use their built-in values before validation and
+  processing. Overridden methods cannot bypass width or nonempty-option checks or inject
+  exceptions. The rule includes path-provider results; boolean widths remain rejected.
 
 ### Fixed
 
@@ -34,6 +37,15 @@ All notable changes to this project are documented here. The format follows
   of repeatedly copying the growing cluster.
 - Emoji selectors at joined piece boundaries can no longer exceed the requested width:
   a final cluster-aligned prefix cut is applied when the joined result would overflow.
+- Joined emoji receive presentation-selector adjustments per component before their widths
+  are summed. Sequences previously undercounted may now require shortening.
+- Windows homes relative to the current drive, such as `/Users/javi` or `\Users\javi`,
+  no longer fold to `~`. Fully qualified and custom-separator homes retain their rules.
+- Custom separator matching is linear in the combined path and separator length, including
+  long near matches. Literal, nonoverlapping separator runs retain their spelling.
+- Malformed stdin under a strict decoder exits 2 with a fixed diagnostic and no traceback.
+- README and public docstrings qualify anchor, filename and extension preservation by
+  the available budget, and document anchor-only cuts and the soft-hyphen width exception.
 - The release script checks whether the version exists, allowing upgrades to an existing
   project. It requires a clean checkout, runs the gate and uses a fresh output directory.
 
@@ -41,6 +53,9 @@ All notable changes to this project are documented here. The format follows
 
 - Runnable public docstrings, the GUIDE, verified source hashes, stronger contract and
   property tests, installed-wheel upgrade checks and explicit source-distribution contents.
+- Contracts for unchanged path-provider exception identity, case-sensitive custom Windows
+  homes and significant stdin whitespace. The inclusive zero-width Hangul ranges now
+  explicitly cover their unassigned positions, including U+D7FF; widths are unchanged.
 
 ## [0.2.0]
 

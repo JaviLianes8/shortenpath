@@ -3,8 +3,9 @@
 [![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
 
 Shorten a filesystem path to fit a terminal column budget for prompts, status bars, tables
-and logs. The home folder folds to `~`, the root and the file name stay, and whole folders
-in the middle give way to `...`. Display only: the filesystem is never read.
+and logs. The home folder folds to `~`, and whole folders in the middle give way to `...`.
+The root and file name are retained when the budget permits; smaller budgets can drop the
+root or cut the file name. Display only: the filesystem is never read.
 
 ## Install
 
@@ -30,8 +31,9 @@ print(shorten(path, 9, flavor="posix", home="/home/javi"))
 # ch...t.py
 ```
 
-Windows paths keep their drive, UNC share or device prefix whole, and both `\` and `/`
-separate folders (each kept as written). The home folder matches regardless of case.
+Windows paths prefer to keep their drive, UNC share or device prefix whole when it fits,
+and both `\` and `/` separate folders (each kept as written). The home folder matches
+regardless of case. A path consisting only of an anchor can have that anchor cut.
 
 ```python
 from shortenpath import shorten
@@ -94,6 +96,9 @@ fits `width` columns:
    room for the placeholder only the start of the name is kept, and when not even its first
    character fits the result is empty.
 
+An anchor-only path is cut using the same middle-cut and prefix fallbacks. For example,
+`shorten("C:\\", 1, flavor="windows", home_tilde=False)` returns `"C"`.
+
 | Option | Meaning |
 | --- | --- |
 | `flavor` | `"posix"`, `"windows"` or `"native"` (the running system). `Flavor` is its type. |
@@ -113,9 +118,11 @@ at a joined piece boundary can require a final prefix cut to enforce the budget.
 Wrong types raise `TypeError`; a width below one, an empty separator or placeholder, or an
 unknown flavor raises `ValueError`. Error messages do not quote input values.
 
-Compared with the Win32 `PathCompactPathEx` function, this never cuts inside the
-anchor or a folder name, keeps the extension of a cut name, counts columns instead of
-characters, and returns a path exactly as long as the budget unchanged.
+Compared with the Win32 `PathCompactPathEx` function, this removes whole middle folders,
+prefers a whole anchor and last name, and preserves the extension of a cut name when the
+extension and required stem characters fit. It counts columns instead of characters and
+returns a path exactly as long as the budget unchanged. Small budgets can drop the anchor
+or cut the extension; an anchor-only path can itself be cut.
 
 ## Command line
 

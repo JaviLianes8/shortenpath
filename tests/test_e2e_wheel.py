@@ -36,6 +36,14 @@ unc = "\\\\srv\\share\\a\\b\\c\\f.txt"
 assert s.shorten(unc, 22, flavor="windows") == "\\\\srv\\share\\...\\f.txt"
 assert s.shorten(pathlib.PurePosixPath("/a/verylongname.py"), 10, flavor="posix") == "ver...e.py"
 assert s.display_width("\u65e5\u672ca\u0301") == 5
+emoji = "\U0001f441\ufe0f\u200d\U0001f5e8\ufe0f"
+assert s.display_width(emoji) == 4
+assert s.shorten(emoji, 3, home_tilde=False) == ""
+assert s.shorten('/Users/u/file', 80, flavor='windows', home='/Users/u') == '/Users/u/file'
+class Width(int):
+    def __lt__(self, other):
+        return False
+assert s.shorten('abcdef', Width(1), home_tilde=False) == 'a'
 for bad, error in ((b"/a", TypeError), (0, TypeError)):
     try:
         s.shorten(bad, 5)
@@ -102,11 +110,23 @@ def test_installed_wheel_end_to_end(tmp_path: Path, artifacts: tuple[Path, Path]
         "-f",
         "posix",
         cwd=work,
-        stdin=b"/a/b/c/d/e/g\n",
+        stdin=b"/a/b/c/d/e/g\n  /a/file \t\n \t \n",
     )
-    assert out.decode().split() == ["/a/b/.../g"]
+    assert out.decode().splitlines() == ["/a/b/.../g", "  /a/file \t", " \t "]
     bad = subprocess.run(
         [str(script), "-w", "0", "x"], cwd=work, capture_output=True, check=False, timeout=30
     )
     assert bad.returncode == 2
     assert b"width must be at least 1" in bad.stderr
+    malformed = subprocess.run(
+        [str(script), "-w", "20", "--no-tilde"],
+        cwd=work,
+        input=b"\xff\n",
+        capture_output=True,
+        env={**os.environ, "PYTHONIOENCODING": "utf-8:strict"},
+        timeout=30,
+    )
+    assert malformed.returncode == 2
+    assert malformed.stderr.replace(b"\r\n", b"\n") == (
+        b"shortenpath: cannot decode standard input\n"
+    )

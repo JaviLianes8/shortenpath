@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
+from ._literal import literal_runs
+
 Flavor = Literal["native", "posix", "windows"]
 Flavor.__doc__ = """Path rule names accepted by ``shorten``.
 
@@ -54,6 +56,7 @@ def resolve(flavor: str) -> str:
     """Return ``"posix"`` or ``"windows"`` for a flavor name."""
     if not isinstance(flavor, str):
         raise TypeError("flavor must be str")
+    flavor = str.__str__(flavor)
     if flavor == "native":
         return "windows" if os.name == "nt" else "posix"
     if flavor in ("posix", "windows"):
@@ -89,26 +92,29 @@ def windows_splitroot(path: str) -> tuple[str, str, str]:
 def split(path: str, flavor: str, sep: str | None) -> Parts:
     """Split ``path`` into :class:`Parts` under ``flavor`` or a custom ``sep``."""
     drive = root = ""
-    if sep is not None:
-        run = re.compile(f"(?:{re.escape(sep)})+")
-    elif flavor == "windows":
+    if sep is None and flavor == "windows":
         drive, root, _ = windows_splitroot(path)
         run = _BACK_RUN if path.startswith(_VERBATIM) else _WINDOWS_RUN
     else:
         run = _POSIX_RUN
     rest = path[len(drive + root) :]
-    lead = run.match(rest)
-    root_sep = root + (lead.group() if lead else "")
-    rest = rest[len(root_sep) - len(root) :]
-    pieces = run.split(rest)
-    gaps = run.findall(rest)
-    if pieces[-1] == "" and gaps:
+    spans = literal_runs(rest, sep) if sep is not None else (m.span() for m in run.finditer(rest))
+    root_sep = root
+    pieces, gaps = [], []
+    end = 0
+    for begin, stop in spans:
+        if begin == 0:
+            root_sep += rest[:stop]
+        else:
+            pieces.append(rest[end:begin])
+            gaps.append(rest[begin:stop])
+        end = stop
+    trailing = ""
+    if end < len(rest):
+        pieces.append(rest[end:])
+    elif gaps:
         trailing = gaps.pop()
-        pieces.pop()
-    else:
-        trailing = ""
-    names = tuple(pieces) if pieces != [""] else ()
-    return Parts(drive + root_sep, names, tuple(gaps), trailing, root_sep)
+    return Parts(drive + root_sep, tuple(pieces), tuple(gaps), trailing, root_sep)
 
 
 def _anchor_key(anchor: str, flavor: str, sep: str | None) -> str:
@@ -129,6 +135,9 @@ def fold_home(parts: Parts, home: Parts, flavor: str, sep: str | None) -> Parts:
     count = len(home.names)
     if count == 0 or not home.root_sep:
         # A relative home, or one that is only a root, says nothing about where a path is.
+        return parts
+    if sep is None and flavor == "windows" and not windows_splitroot(home.anchor)[0]:
+        # A root without a volume is still relative to the current Windows drive.
         return parts
     if _anchor_key(parts.anchor, flavor, sep) != _anchor_key(home.anchor, flavor, sep):
         return parts
