@@ -14,8 +14,8 @@ Progress:
 - [x] Docs: README, GUIDE, CHANGELOG and strict render check (items 11, 12)
 - [x] Packaging, e2e, every available Python (items 8, 10, 13, 14)
 - [x] Gates (item 15)
-- [ ] PR and trace guard CLEAN; the independent reviewer (16), merge and publish (17) and the
-      five QA lenses (19) follow
+- [x] PR #3 from `release/1.0.0` and trace guard CLEAN
+- [ ] Independent reviewer (16), merge and publish (17), and five QA lenses (19)
 
 ## Baseline and API review
 
@@ -66,7 +66,7 @@ Independent QA lenses and the independent review have not run for this release.
 | 14 | PASS: both archive member lists inspected; license and typing marker present, no fetched text or scratch files |
 | 15 | PASS: all four gates exit 0 independently; strict typing also includes tests |
 | 16 | Pending independent review |
-| 17 | PR and guard pending; merge and publishing are separate stages |
+| 17 | PR #3 from `release/1.0.0`, trace guard CLEAN; merge and publishing are separate stages |
 | 18 | PASS: all 18 deliberate mutations killed by behavioral assertions |
 | 19 | Pending all five independent QA lenses; no verdicts carried forward |
 
@@ -160,4 +160,5 @@ Artifact SHA-256 values (the certification report is excluded from both archives
 - Sdist: `f4673f9ff6a6e5682e4b2955c64f394d7d174d55a254d2f38a04081c16c05482`
 
 The release script passes PowerShell syntax parsing. Its upload path was not invoked.
+PR: https://github.com/JaviLianes8/shortenpath/pull/3, with trace guard CLEAN on 2026-11-01.
 The independent reviewer and all five QA lenses remain pending for the next stage.
